@@ -6,7 +6,6 @@
 
 class Solver {
 	public:
-		// virtual template <class T : public Solver> T getConfig() = 0;
 		virtual int64_t getDuration() = 0;
 		virtual float getProgress() = 0;
 		virtual int64_t getSolutions() = 0;
@@ -47,7 +46,7 @@ class Config {
 		}
 		bool validate();
 		void from(Config);
-		// template <class T : public Config> T from(ifstream);
+		template <class T> T from(std::ifstream);
 		void writeTo(std::ofstream);
 };
 

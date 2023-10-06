@@ -6,5 +6,5 @@ Solver::Solver(){
 }
 
 void Solver::solve(){
-	std::cout << "Solver solving.." << std::endl;
+	std::cout << "Solver solving..." << std::endl;
 }
