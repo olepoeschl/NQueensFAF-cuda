@@ -1,10 +1,31 @@
 #include "solver.hpp"
 #include <iostream>
 
-Solver::Solver(){
-	std::cout << "Solver constructed" << std::endl;
+void Solver::solveAsync(){
+	m_solverThread = new std::thread(&Solver::solve, this);
+}
+void Solver::waitFor(){
+	if(m_solverThread == NULL)
+		throw SolverException("Solver is not running and therefore cannot be waited for!");
+	m_solverThread->join();
+	delete m_solverThread;
+}
+		
+CUDASolver::CUDASolver() : Solver() {
 }
 
-void Solver::solve(){
-	std::cout << "Solver solving..." << std::endl;
+void CUDASolver::solve(){
+	std::cout << "solving..." << std::endl;
+}
+
+int64_t CUDASolver::getDuration() {
+	return 69;
+}
+
+float CUDASolver::getProgress() {
+	return 1.234;
+}
+
+int64_t CUDASolver::getSolutions() {
+	return 420;
 }

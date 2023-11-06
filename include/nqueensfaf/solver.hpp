@@ -3,18 +3,34 @@
 
 #include <string>
 #include <fstream>
+#include <thread>
 
 class Solver {
 	public:
 		virtual int64_t getDuration() = 0;
 		virtual float getProgress() = 0;
 		virtual int64_t getSolutions() = 0;
-		void solve();
-		// ...
+		virtual void solve() = 0;
+		void solveAsync();
+		void waitFor();
+		void setN(int N){
+			m_N = N;
+		}
 	protected:
-		Solver();
+		Solver(){}
 	private:
 		int m_N;
+		std::thread* m_solverThread = NULL;
+};
+
+class CUDASolver : public Solver {
+	public:
+		int x = 0;
+		CUDASolver();
+		int64_t getDuration();
+		float getProgress();
+		int64_t getSolutions();
+		void solve();
 };
 
 class SolverException : public std::exception {
