@@ -10,7 +10,11 @@ void Solver::waitFor(){
 	m_solverThread->join();
 	delete m_solverThread;
 }
-		
+
+
+/*
+ * CUDASolver implementation
+*/
 CUDASolver::CUDASolver() : Solver() {
 }
 
