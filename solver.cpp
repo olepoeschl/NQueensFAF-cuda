@@ -1,16 +1,39 @@
 #include "solver.hpp"
 #include <iostream>
+#include <fstream>
 
-void Solver::solveAsync(){
+/*
+ * Solver implementation
+*/
+void Solver::solveAsync() {
 	m_solverThread = new std::thread(&Solver::solve, this);
 }
-void Solver::waitFor(){
-	if(m_solverThread == NULL)
+
+void Solver::waitFor() {
+	if (m_solverThread == NULL)
 		throw SolverException("Solver is not running and therefore cannot be waited for!");
 	m_solverThread->join();
 	delete m_solverThread;
 }
 
+/*
+ * SolverConfig implementation
+*/
+bool SolverConfig::validate() {
+	return true;
+}
+
+void SolverConfig::readFrom(SolverConfig config) {
+
+}
+
+void SolverConfig::readFrom(std::ifstream in) {
+
+}
+
+void SolverConfig::writeTo(std::ofstream out) {
+
+}
 
 /*
  * CUDASolver implementation
@@ -18,7 +41,7 @@ void Solver::waitFor(){
 CUDASolver::CUDASolver() : Solver() {
 }
 
-void CUDASolver::solve(){
+void CUDASolver::solve() {
 	std::cout << "solving..." << std::endl;
 }
 
@@ -27,7 +50,7 @@ int64_t CUDASolver::getDuration() {
 }
 
 float CUDASolver::getProgress() {
-	return 1.234;
+	return 1.234f;
 }
 
 int64_t CUDASolver::getSolutions() {

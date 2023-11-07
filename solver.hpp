@@ -1,0 +1,91 @@
+#ifndef SOLVER_H
+#define SOLVER_H
+
+#include <string>
+#include <fstream>
+#include <thread>
+#include <vector>
+#include <cuda.h>
+
+class SolverConfig {
+public:
+	long updateInterval;
+	bool autoSaveEnabled, autoDeleteEnabled;
+	float autoSavePercentageStep;
+	std::string autoSavePath;
+
+	SolverConfig() {
+		updateInterval = 128;
+		autoSaveEnabled = false;
+		autoDeleteEnabled = false;
+		autoSavePercentageStep = 10;
+		autoSavePath = "nqueensfaf{N}.dat";
+	}
+	bool validate();
+	void readFrom(SolverConfig config);
+	void readFrom(std::ifstream in);
+	void writeTo(std::ofstream out);
+};
+
+class Solver {
+public:
+	virtual int64_t getDuration() = 0;
+	virtual float getProgress() = 0;
+	virtual int64_t getSolutions() = 0;
+	virtual void solve() = 0;
+	void solveAsync();
+	void waitFor();
+	void setN(int N) {
+		m_N = N;
+	}
+	void setConfig(SolverConfig config) {
+		if (!config.validate())
+			throw std::invalid_argument("invalid solver config");
+		m_config.readFrom(config);
+	}
+protected:
+	Solver() {}
+private:
+	int m_N = 0;
+	std::thread* m_solverThread = NULL;
+	SolverConfig m_config;
+};
+
+class CUDADeviceConfig {
+public:
+	int16_t blockSize;
+};
+
+class CUDASolver : public Solver {
+public:
+	CUDASolver();
+	int64_t getDuration();
+	float getProgress();
+	int64_t getSolutions();
+	void solve();
+private:
+	class Device {
+	public:
+		std::string name;
+		CUDADeviceConfig config;
+		CUdevice device;
+		CUcontext context;
+		CUmodule module;
+		CUfunction function;
+	};
+};
+
+class SolverException : public std::exception {
+public:
+	SolverException() {
+	}
+	SolverException(std::string msg) : m_msg(msg) {
+	}
+	std::string what() {
+		return m_msg;
+	}
+private:
+	std::string m_msg;
+};
+
+#endif	
