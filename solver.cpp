@@ -1,6 +1,7 @@
 #include "solver.hpp"
 #include <iostream>
 #include <fstream>
+#include <cuda.h>
 
 /*
  * SolverConfig implementation
@@ -46,6 +47,7 @@ CUDASolver::CUDASolver() : Solver() {
 }
 
 void CUDASolver::solve() {
+	cuInit(0);
 	std::cout << "solving..." << std::endl;
 }
 

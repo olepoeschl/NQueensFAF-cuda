@@ -51,6 +51,23 @@ private:
 	SolverConfig m_config;
 };
 
+class Constellation {
+public:
+	Constellation() {}
+	Constellation(int c_id, int c_ld, int c_rd, int c_col, int c_startijkl, long c_solutions) :
+		id(id), rd(rd), col(col), startijkl(startijkl), solutions(solutions), ld(ld) {
+	}
+	int getÍjkl() {
+		return startijkl & 0b11111111111111111111;
+	}
+	int id;
+	int ld;
+	int rd;
+	int col;
+	int startijkl;
+	long solutions;
+};
+
 class CUDADeviceConfig {
 public:
 	int16_t blockSize;
