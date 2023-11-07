@@ -3,6 +3,29 @@
 #include <fstream>
 
 /*
+ * SolverConfig implementation
+*/
+bool SolverConfig::validate() {
+	return (updateInterval > 0) && (autoSavePercentageStep > 0 && autoSavePercentageStep <= 100) && (autoSavePath.length() > 0);
+}
+
+void SolverConfig::readFrom(SolverConfig config) {
+	updateInterval = config.updateInterval;
+	autoSaveEnabled = config.autoSaveEnabled;
+	autoDeleteEnabled = config.autoDeleteEnabled;
+	autoSavePercentageStep = config.autoSavePercentageStep;
+	autoSavePath = config.autoSavePath;
+}
+
+void SolverConfig::readFrom(std::ifstream in) {
+
+}
+
+void SolverConfig::writeTo(std::ofstream out) {
+
+}
+
+/*
  * Solver implementation
 */
 void Solver::solveAsync() {
@@ -14,25 +37,6 @@ void Solver::waitFor() {
 		throw SolverException("Solver is not running and therefore cannot be waited for!");
 	m_solverThread->join();
 	delete m_solverThread;
-}
-
-/*
- * SolverConfig implementation
-*/
-bool SolverConfig::validate() {
-	return true;
-}
-
-void SolverConfig::readFrom(SolverConfig config) {
-
-}
-
-void SolverConfig::readFrom(std::ifstream in) {
-
-}
-
-void SolverConfig::writeTo(std::ofstream out) {
-
 }
 
 /*
