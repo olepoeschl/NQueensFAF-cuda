@@ -1,8 +1,7 @@
 #include <iostream>
-#include "solver.hpp"
+#include "solver.cuh"
 
 int main() {
-	CUDASolver cudaSolver;
-	cudaSolver.solve();
+	CUDASolver cudaSolver = CUDASolver();
 	return 0;
 }

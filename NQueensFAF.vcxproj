@@ -137,10 +137,10 @@
     <ClCompile Include="main.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="solver.hpp" />
+    <ClInclude Include="solver.cuh" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="solver.cpp" />
+    <CudaCompile Include="solver.cu" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

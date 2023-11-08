@@ -1,4 +1,4 @@
-#include "solver.hpp"
+#include "solver.cuh"
 #include <iostream>
 #include <fstream>
 #include <cuda.h>
@@ -44,6 +44,34 @@ void Solver::waitFor() {
  * CUDASolver implementation
 */
 CUDASolver::CUDASolver() : Solver() {
+	fetchAvailableDevices();
+}
+
+void CUDASolver::checkCUErr(CUresult err) {
+	if (err != CUDA_SUCCESS) {
+		std::string errMsg = "";
+		const char* strBuf = NULL;
+
+		int err2 = cuGetErrorName(err, &strBuf);
+		if (err2 == CUDA_ERROR_INVALID_VALUE) {
+			throw std::runtime_error("unknown CUDA error code: " + err2);
+		}
+		errMsg.append(strBuf);
+		const char* strBuf2 = NULL;
+		err2 = cuGetErrorString(err, &strBuf2);
+		if (err2 == CUDA_ERROR_INVALID_VALUE) {
+			throw std::runtime_error("unknown CUDA error code: " + err2);
+		}
+		errMsg.append(strBuf2);
+
+		throw std::runtime_error(std::string("CUDA error: " + errMsg));
+	}
+}
+
+void CUDASolver::fetchAvailableDevices() {
+	int deviceCount;
+	checkCUErr(cuDeviceGetCount(&deviceCount));
+	std::cout << "device count: " << deviceCount << std::endl;
 }
 
 void CUDASolver::solve() {

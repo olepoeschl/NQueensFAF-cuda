@@ -87,12 +87,14 @@ private:
 		CUmodule module;
 		CUfunction function;
 		void run();
-		void createCUDAObjects();
+		void createCUObjects();
 		void compileProgram();
 		void createAndFillBuffers();
 		void readResults();
-		void destroyCUDAObjects();
+		void destroyCUObjects();
 	};
+	void checkCUErr(CUresult err);
+	void fetchAvailableDevices();
 	std::vector<Constellation> m_constellations;
 	std::chrono::high_resolution_clock::time_point start, end;
 	std::vector<Device> availableDevices, devices;
