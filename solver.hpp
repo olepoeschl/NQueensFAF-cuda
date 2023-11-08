@@ -53,18 +53,13 @@ private:
 
 class Constellation {
 public:
-	Constellation() {}
 	Constellation(int c_id, int c_ld, int c_rd, int c_col, int c_startijkl, long c_solutions) :
-		id(id), rd(rd), col(col), startijkl(startijkl), solutions(solutions), ld(ld) {
+		id(c_id), ld(c_ld), rd(c_rd), col(c_col), startijkl(c_startijkl), solutions(c_solutions) {
 	}
 	int getÍjkl() {
 		return startijkl & 0b11111111111111111111;
 	}
-	int id;
-	int ld;
-	int rd;
-	int col;
-	int startijkl;
+	int id, ld, rd, col, startijkl;
 	long solutions;
 };
 
@@ -80,6 +75,8 @@ public:
 	float getProgress();
 	int64_t getSolutions();
 	void solve();
+	std::string* getAvailableDevices();
+	void setDevice(int* chosenDevicesIndexes);
 private:
 	class Device {
 	public:
@@ -89,7 +86,16 @@ private:
 		CUcontext context;
 		CUmodule module;
 		CUfunction function;
+		void run();
+		void createCUDAObjects();
+		void compileProgram();
+		void createAndFillBuffers();
+		void readResults();
+		void destroyCUDAObjects();
 	};
+	std::vector<Constellation> m_constellations;
+	std::chrono::high_resolution_clock::time_point start, end;
+	std::vector<Device> availableDevices, devices;
 };
 
 class SolverException : public std::exception {
