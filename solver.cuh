@@ -80,8 +80,6 @@ public:
 private:
 	class Device {
 	public:
-		Device() {
-		}
 		void run();
 		void createCUObjects();
 		void compileProgram();
