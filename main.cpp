@@ -3,7 +3,7 @@
 
 int main() {
 	try {
-		CUDASolver cudaSolver = CUDASolver();
+		CUDASolver cudaSolver = CUDASolver(16);
 		auto deviceNames = cudaSolver.getAvailableDevices();
 		std::cout << "available devices:" << std::endl;
 		std::cout << "==================" << std::endl;

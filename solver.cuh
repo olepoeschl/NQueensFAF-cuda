@@ -43,8 +43,8 @@ public:
 		m_config.readFrom(config);
 	}
 protected:
-	Solver() : 
-		m_N(0), m_solverThread(NULL) {
+	Solver(uint8_t N) : 
+		m_N(N), m_solverThread(NULL) {
 	}
 	uint8_t m_N;
 private:
@@ -67,7 +67,7 @@ public:
 class ConstellationsGenerator {
 public:
 	ConstellationsGenerator(uint8_t N);
-	std::vector<Constellation> genConstellations(uint8_t preQueens);
+	std::vector<Constellation>& genConstellations(uint8_t preQueens);
 private:
 	void setPreQueens(uint32_t ld, uint32_t rd, uint32_t col, uint8_t k, uint8_t l, uint8_t row, uint8_t queens);
 	uint32_t toIjkl(uint8_t i, uint8_t j, uint8_t k, uint8_t l) const;
@@ -86,7 +86,7 @@ public:
 
 class CUDASolver : public Solver {
 public:
-	CUDASolver();
+	CUDASolver(uint8_t N);
 	uint64_t getDuration() const;
 	float getProgress() const;
 	int64_t getSolutions() const;

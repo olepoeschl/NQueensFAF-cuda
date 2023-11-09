@@ -50,7 +50,7 @@ ConstellationsGenerator::ConstellationsGenerator(uint8_t N) :
 	m_mask = (m_L << 1) - 1;
 }
 
-std::vector<Constellation> ConstellationsGenerator::genConstellations(uint8_t preQueens) {
+std::vector<Constellation>& ConstellationsGenerator::genConstellations(uint8_t preQueens) {
 	m_preQueens = preQueens;
 	uint32_t ld, rd, col, ijkl;
 	size_t currentSize;
@@ -196,7 +196,7 @@ bool ConstellationsGenerator::checkRotations(uint8_t i, uint8_t j, uint8_t k, ui
  * CUDASolver implementation
 */
 std::vector<CUDASolver::Device> CUDASolver::m_availableDevices;
-CUDASolver::CUDASolver() : Solver() {
+CUDASolver::CUDASolver(uint8_t N) : Solver(N) {
 	static bool initialized;
 	if (!initialized) {
 		initialized = true;
