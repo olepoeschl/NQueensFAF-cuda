@@ -16,12 +16,9 @@ public:
 	float autoSavePercentageStep;
 	std::string autoSavePath;
 
-	SolverConfig() {
-		updateInterval = 128;
-		autoSaveEnabled = false;
-		autoDeleteEnabled = false;
-		autoSavePercentageStep = 10;
-		autoSavePath = "nqueensfaf{N}.dat";
+	SolverConfig() : 
+		updateInterval(128), autoSaveEnabled(false), autoDeleteEnabled(false), 
+		autoSavePercentageStep(10), autoSavePath("nqueensfaf{N}.dat") {
 	}
 	bool validate();
 	void readFrom(SolverConfig config);
@@ -46,10 +43,12 @@ public:
 		m_config.readFrom(config);
 	}
 protected:
-	Solver() {}
+	Solver() : 
+		m_N(0), m_solverThread(NULL) {
+	}
 private:
-	int m_N = 0;
-	std::thread* m_solverThread = NULL;
+	int m_N;
+	std::thread* m_solverThread;
 	SolverConfig m_config;
 };
 
