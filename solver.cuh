@@ -11,7 +11,7 @@
 
 class SolverConfig {
 public:
-	long updateInterval;
+	uint64_t updateInterval;
 	bool autoSaveEnabled, autoDeleteEnabled;
 	float autoSavePercentageStep;
 	std::string autoSavePath;
@@ -28,13 +28,13 @@ public:
 
 class Solver {
 public:
-	virtual int64_t getDuration() const = 0;
+	virtual uint64_t getDuration() const = 0;
 	virtual float getProgress() const = 0;
 	virtual int64_t getSolutions() const = 0;
 	virtual void solve() = 0;
 	void solveAsync();
 	void waitFor();
-	void setN(const int N) {
+	void setN(const uint8_t N) {
 		m_N = N;
 	}
 	void setConfig(const SolverConfig& config) {
@@ -46,47 +46,48 @@ protected:
 	Solver() : 
 		m_N(0), m_solverThread(NULL) {
 	}
+	uint8_t m_N;
 private:
-	int m_N;
 	std::thread* m_solverThread;
 	SolverConfig m_config;
 };
 
 class Constellation {
 public:
-	Constellation(int c_id, int c_ld, int c_rd, int c_col, int c_startijkl, long c_solutions) :
+	Constellation(int c_id, int c_ld, int c_rd, int c_col, int c_startijkl, int64_t c_solutions) :
 		id(c_id), ld(c_ld), rd(c_rd), col(c_col), startijkl(c_startijkl), solutions(c_solutions) {
 	}
 	int getÍjkl() const {
 		return startijkl & 0b11111111111111111111;
 	}
 	int id, ld, rd, col, startijkl;
-	long solutions;
+	int64_t solutions;
 };
 
 class ConstellationsGenerator {
 public:
-	ConstellationsGenerator(int N);
-	std::vector<Constellation> genConstellations(int preQueens);
+	ConstellationsGenerator(uint8_t N);
+	std::vector<Constellation> genConstellations(uint8_t preQueens);
 private:
-	void setPreQueens(int ld, int rd, int col, int k, int l, int row, int queens);
-	int toÍjkl(int i, int j, int k, int l) const;
-	bool checkRotations(int i, int j, int k, int l) const;
-	int m_N, m_preQueens;
-	int m_L, m_mask, m_LD, m_RD, m_subconstellationsCounter;
+	void setPreQueens(uint32_t ld, uint32_t rd, uint32_t col, uint8_t k, uint8_t l, uint8_t row, uint8_t queens);
+	uint32_t toIjkl(uint8_t i, uint8_t j, uint8_t k, uint8_t l) const;
+	bool checkRotations(uint8_t i, uint8_t j, uint8_t k, uint8_t l) const;
+	uint8_t m_N, m_preQueens;
+	uint32_t m_L, m_mask, m_LD, m_RD;
+	uint32_t m_subconstellationsCounter;
 	std::vector<Constellation> m_constellations;
-	std::unordered_set<int> m_ijkls;
+	std::unordered_set<uint32_t> m_ijkls;
 };
 
 class CUDADeviceConfig {
 public:
-	int16_t blockSize;
+	uint16_t blockSize;
 };
 
 class CUDASolver : public Solver {
 public:
 	CUDASolver();
-	int64_t getDuration() const;
+	uint64_t getDuration() const;
 	float getProgress() const;
 	int64_t getSolutions() const;
 	void solve();

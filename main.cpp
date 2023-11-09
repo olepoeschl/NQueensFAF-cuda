@@ -17,6 +17,7 @@ int main() {
 			throw std::invalid_argument("device index has to be of type integer");
 		}
 		cudaSolver.setDevice(chosenDeviceIndex);
+		cudaSolver.solve();
 	}
 	catch(SolverException e){
 		std::cerr << "!unexpected solver exception: " << e.what() << std::endl;
