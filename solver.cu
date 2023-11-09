@@ -44,26 +44,30 @@ void Solver::waitFor() {
  * CUDASolver implementation
 */
 CUDASolver::CUDASolver() : Solver() {
+	static bool initialized;
+	if (!initialized) {
+		initialized = true;
+		checkCUErr(cuInit(0));
+	}
 	fetchAvailableDevices();
 }
 
 void CUDASolver::checkCUErr(CUresult err) {
 	if (err != CUDA_SUCCESS) {
-		std::string errMsg = "";
-		const char* strBuf = NULL;
+		if(err == CUDA_ERROR_NOT_INITIALIZED)
+			throw std::runtime_error("CUDA was not initialized");
 
-		int err2 = cuGetErrorName(err, &strBuf);
-		if (err2 == CUDA_ERROR_INVALID_VALUE) {
-			throw std::runtime_error("unknown CUDA error code: " + err2);
-		}
-		errMsg.append(strBuf);
-		const char* strBuf2 = NULL;
-		err2 = cuGetErrorString(err, &strBuf2);
-		if (err2 == CUDA_ERROR_INVALID_VALUE) {
-			throw std::runtime_error("unknown CUDA error code: " + err2);
-		}
-		errMsg.append(strBuf2);
+		const char* name;
+		int err2 = cuGetErrorName(err, &name);
+		if(err2 == CUDA_ERROR_INVALID_VALUE)
+			throw std::runtime_error("unknown CUDA error code: " + std::to_string(err));
+		std::cout << "name: " << name << std::endl;
 
+		const char* description;
+		cuGetErrorName(err, &description);
+		std::cout << "description: " << description << std::endl;
+
+		std::string errMsg = name + std::string(": ") + description;
 		throw std::runtime_error(std::string("CUDA error: " + errMsg));
 	}
 }
@@ -71,11 +75,29 @@ void CUDASolver::checkCUErr(CUresult err) {
 void CUDASolver::fetchAvailableDevices() {
 	int deviceCount;
 	checkCUErr(cuDeviceGetCount(&deviceCount));
-	std::cout << "device count: " << deviceCount << std::endl;
+	for (int i = 0; i < deviceCount; i++) {
+		Device device;
+		checkCUErr(cuDeviceGet(&(device.device), i));
+		checkCUErr(cuDeviceGetName(device.name, 50, device.device));
+		m_availableDevices.push_back(device);
+	}
+}
+
+std::vector<std::string> CUDASolver::getAvailableDevices() {
+	std::vector<std::string> deviceNames;
+	for (const Device& device : m_availableDevices) {
+		deviceNames.push_back(device.name);
+	}
+	return deviceNames;
+}
+
+void CUDASolver::setDevice(uint8_t index) {
+	if (index >= m_availableDevices.size())
+		throw std::invalid_argument("invalid device index");
+	m_device = m_availableDevices.at(index);
 }
 
 void CUDASolver::solve() {
-	cuInit(0);
 	std::cout << "solving..." << std::endl;
 }
 

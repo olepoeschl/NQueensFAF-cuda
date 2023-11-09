@@ -75,42 +75,43 @@ public:
 	float getProgress();
 	int64_t getSolutions();
 	void solve();
-	std::string* getAvailableDevices();
-	void setDevice(int* chosenDevicesIndexes);
+	std::vector<std::string> getAvailableDevices();
+	void setDevice(uint8_t index);
 private:
 	class Device {
 	public:
-		std::string name;
-		CUDADeviceConfig config;
-		CUdevice device;
-		CUcontext context;
-		CUmodule module;
-		CUfunction function;
+		Device() {
+		}
 		void run();
 		void createCUObjects();
 		void compileProgram();
 		void createAndFillBuffers();
 		void readResults();
 		void destroyCUObjects();
+		char name[50];
+		CUDADeviceConfig config;
+		CUdevice device;
+		CUcontext context;
+		CUmodule module;
+		CUfunction function;
 	};
 	void checkCUErr(CUresult err);
 	void fetchAvailableDevices();
 	std::vector<Constellation> m_constellations;
-	std::chrono::high_resolution_clock::time_point start, end;
-	std::vector<Device> availableDevices, devices;
+	std::chrono::high_resolution_clock::time_point m_start, m_end;
+	std::vector<Device> m_availableDevices;
+	Device m_device;
 };
 
 class SolverException : public std::exception {
 public:
-	SolverException() {
+	SolverException(const char* msg) : m_msg(msg) {
 	}
-	SolverException(std::string msg) : m_msg(msg) {
-	}
-	std::string what() {
+	const char* what() {
 		return m_msg;
 	}
 private:
-	std::string m_msg;
+	const char* m_msg;
 };
 
 #endif	
