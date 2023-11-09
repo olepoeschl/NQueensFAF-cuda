@@ -197,9 +197,35 @@ bool ConstellationsGenerator::checkRotations(uint8_t i, uint8_t j, uint8_t k, ui
 }
 
 /*
- * CUDASolver implementation
+ * CUDASolver::Device implementation
 */
 std::vector<CUDASolver::Device> CUDASolver::m_availableDevices;
+
+void CUDASolver::Device::createCUDAObjects() {
+	checkCUErr(cuCtxCreate(&context, 0, device));
+	checkCUErr(cuStreamCreate(&xStream, 0));
+	checkCUErr(cuStreamCreate(&memStream, 0));
+	checkCUErr(cuStreamCreate(&updateStream, 0));
+	checkCUErr(cuEventCreate(&startEvent, 0));
+	checkCUErr(cuEventCreate(&endEvent, 0));
+	checkCUErr(cuEventCreate(&memEvent, 0));
+	checkCUErr(cuEventCreate(&updateEvent, 0));
+}
+
+void CUDASolver::Device::destroyCUDAObjects() {
+	checkCUErr(cuEventDestroy(startEvent));
+	checkCUErr(cuEventDestroy(endEvent));
+	checkCUErr(cuEventDestroy(memEvent));
+	checkCUErr(cuEventDestroy(updateEvent));
+	checkCUErr(cuStreamDestroy(xStream));
+	checkCUErr(cuStreamDestroy(memStream));
+	checkCUErr(cuStreamDestroy(updateStream));
+	checkCUErr(cuCtxDestroy(context));
+}
+
+/*
+ * CUDASolver implementation
+*/
 CUDASolver::CUDASolver(uint8_t N) : Solver(N) {
 	static bool initialized;
 	if (!initialized) {
@@ -261,8 +287,7 @@ void CUDASolver::setDevice(uint8_t index) {
 	m_device = m_availableDevices.at(index);
 }
 
-
-void CUDASolver::buildPtx(const char* kernelSourcePath) {
+void CUDASolver::compileProgram(const char* kernelSourcePath) {
 	std::ifstream kernelSourceFile(kernelSourcePath);
 	std::string kernelSource((std::istreambuf_iterator<char>(kernelSourceFile)), (std::istreambuf_iterator<char>()));
 	nvrtcProgram program;
@@ -282,24 +307,19 @@ void CUDASolver::buildPtx(const char* kernelSourcePath) {
 	
 	size_t ptxSize;
 	checkNVRTCErr(nvrtcGetPTXSize(program, &ptxSize));
-	m_device.ptx = new char[ptxSize];
-	checkNVRTCErr(nvrtcGetPTX(program, m_device.ptx));
+	ptx = new char[ptxSize];
+	checkNVRTCErr(nvrtcGetPTX(program, ptx));
+	checkCUErr(cuModuleLoadData(&module, (const void*)ptx));
+	checkCUErr(cuModuleGetFunction(&function, module, "nqfaf"));
 }
 
 void CUDASolver::solve() {
 	ConstellationsGenerator generator(m_N);
 	m_constellations = generator.genConstellations(m_device.config.preQueens);
 
-	buildPtx("kernel.cu");
-
-	/*checkCUErr(cuCtxCreate(&m_device.context, 0, m_device.device));
-	checkCUErr(cuStreamCreate(&m_device.xStream, 0));
-	checkCUErr(cuStreamCreate(&m_device.memStream, 0));
-	checkCUErr(cuStreamCreate(&m_device.updateStream, 0));
-	checkCUErr(cuEventCreate(&m_device.startEvent, 0));
-	checkCUErr(cuEventCreate(&m_device.endEvent, 0));
-	checkCUErr(cuEventCreate(&m_device.memEvent, 0));
-	checkCUErr(cuEventCreate(&m_device.updateEvent, 0));*/
+	m_device.createCUDAObjects();
+	compileProgram("kernel.cu");
+	m_device.destroyCUDAObjects();
 }
 
 uint64_t CUDASolver::getDuration() const {
