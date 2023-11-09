@@ -6,7 +6,7 @@
 /*
  * SolverConfig implementation
 */
-bool SolverConfig::validate() {
+bool SolverConfig::validate() const {
 	return (updateInterval > 0) && (autoSavePercentageStep > 0 && autoSavePercentageStep <= 100) && (autoSavePath.length() > 0);
 }
 
@@ -22,7 +22,7 @@ void SolverConfig::readFrom(std::ifstream in) {
 
 }
 
-void SolverConfig::writeTo(std::ofstream out) {
+void SolverConfig::writeTo(std::ofstream out) const {
 
 }
 
@@ -94,7 +94,7 @@ void CUDASolver::fetchAvailableDevices() {
 	}
 }
 
-std::vector<std::string> CUDASolver::getAvailableDevices() {
+std::vector<std::string> CUDASolver::getAvailableDevices() const {
 	std::vector<std::string> deviceNames;
 	for (const Device& device : m_availableDevices) {
 		deviceNames.push_back(device.name);
@@ -112,14 +112,14 @@ void CUDASolver::solve() {
 	std::cout << "solving..." << std::endl;
 }
 
-int64_t CUDASolver::getDuration() {
+int64_t CUDASolver::getDuration() const {
 	return 69;
 }
 
-float CUDASolver::getProgress() {
+float CUDASolver::getProgress() const {
 	return 1.234f;
 }
 
-int64_t CUDASolver::getSolutions() {
+int64_t CUDASolver::getSolutions() const {
 	return 420;
 }
