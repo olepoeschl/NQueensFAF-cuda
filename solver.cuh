@@ -5,6 +5,8 @@
 #include <fstream>
 #include <thread>
 #include <vector>
+#include <unordered_set>
+
 #include <cuda.h>
 
 class SolverConfig {
@@ -61,6 +63,20 @@ public:
 	}
 	int id, ld, rd, col, startijkl;
 	long solutions;
+};
+
+class ConstellationsGenerator {
+public:
+	ConstellationsGenerator(int N);
+	std::vector<Constellation> genConstellations();
+private:
+	void setPreQueens(int ld, int rd, int col, int k, int l, int row, int queens);
+	int toÍjkl(int i, int j, int k, int l);
+	bool checkRotations(int i, int j, int k, int l);
+	int N, preQueens;
+	int L, mask, LD, RD, counter;
+	std::vector<Constellation> constellations;
+	std::unordered_set<int> ijkls;
 };
 
 class CUDADeviceConfig {
