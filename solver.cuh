@@ -73,10 +73,10 @@ private:
 	void setPreQueens(int ld, int rd, int col, int k, int l, int row, int queens);
 	int toÍjkl(int i, int j, int k, int l);
 	bool checkRotations(int i, int j, int k, int l);
-	int N, preQueens;
-	int L, mask, LD, RD, counter;
-	std::vector<Constellation> constellations;
-	std::unordered_set<int> ijkls;
+	int m_N, m_preQueens;
+	int m_L, m_mask, m_LD, m_RD, m_counter;
+	std::vector<Constellation> m_constellations;
+	std::unordered_set<int> m_ijkls;
 };
 
 class CUDADeviceConfig {
