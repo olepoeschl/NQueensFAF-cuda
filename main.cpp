@@ -13,16 +13,19 @@ int main() {
 		int chosenDeviceIndex;
 		std::cout << std::endl << "> choose device (index): ";
 		std::cin >> chosenDeviceIndex;
+		if (std::cin.fail()) {
+			throw std::invalid_argument("device index has to be of type integer");
+		}
 		cudaSolver.setDevice(chosenDeviceIndex);
 	}
 	catch(SolverException e){
-		std::cout << "!unexpected solver exception: " << e.what() << std::endl;
+		std::cerr << "!unexpected solver exception: " << e.what() << std::endl;
 	}
 	catch (std::runtime_error e) {
-		std::cout << "!unexpected runtime error: " << e.what() << std::endl;
+		std::cerr << "!unexpected runtime error: " << e.what() << std::endl;
 	}
 	catch (std::exception e) {
-		std::cout << "!unexpected exception: " << e.what() << std::endl;
+		std::cerr << "!unexpected exception: " << e.what() << std::endl;
 	}
 	return 0;
 }

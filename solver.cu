@@ -43,13 +43,14 @@ void Solver::waitFor() {
 /*
  * CUDASolver implementation
 */
+std::vector<CUDASolver::Device> CUDASolver::m_availableDevices;
 CUDASolver::CUDASolver() : Solver() {
 	static bool initialized;
 	if (!initialized) {
 		initialized = true;
 		checkCUErr(cuInit(0));
+		fetchAvailableDevices();
 	}
-	fetchAvailableDevices();
 }
 
 void CUDASolver::checkCUErr(CUresult err) {

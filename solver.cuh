@@ -86,26 +86,26 @@ private:
 		void createAndFillBuffers();
 		void readResults();
 		void destroyCUObjects();
-		char name[50];
-		CUDADeviceConfig config;
-		CUdevice device;
-		CUcontext context;
-		CUmodule module;
-		CUfunction function;
+		char name[50]{};
+		CUDADeviceConfig config{};
+		CUdevice device = 0;
+		CUcontext context = 0;
+		CUmodule module = 0;
+		CUfunction function = 0;
 	};
-	void checkCUErr(CUresult err);
-	void fetchAvailableDevices();
+	static void checkCUErr(CUresult err);
+	static void fetchAvailableDevices();
+	static std::vector<Device> m_availableDevices;
+	Device m_device;
 	std::vector<Constellation> m_constellations;
 	std::chrono::high_resolution_clock::time_point m_start, m_end;
-	std::vector<Device> m_availableDevices;
-	Device m_device;
 };
 
 class SolverException : public std::exception {
 public:
 	SolverException(const char* msg) : m_msg(msg) {
 	}
-	const char* what() {
+	char const* what() const {
 		return m_msg;
 	}
 private:
