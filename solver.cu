@@ -1,7 +1,11 @@
 #include "solver.cuh"
+
 #include <iostream>
 #include <fstream>
+#include <string.h>
+
 #include <cuda.h>
+#include <nvrtc.h>
 
 /*
  * SolverConfig implementation
@@ -214,14 +218,21 @@ void CUDASolver::checkCUErr(CUresult err) {
 		int err2 = cuGetErrorName(err, &name);
 		if(err2 == CUDA_ERROR_INVALID_VALUE)
 			throw std::runtime_error("unknown CUDA error code: " + std::to_string(err));
-		std::cout << "name: " << name << std::endl;
 
 		const char* description;
 		cuGetErrorName(err, &description);
-		std::cout << "description: " << description << std::endl;
 
 		std::string errMsg = name + std::string(": ") + description;
 		throw std::runtime_error(std::string("CUDA error: " + errMsg));
+	}
+}
+
+void CUDASolver::checkNVRTCErr(nvrtcResult err) {
+	if (err != NVRTC_SUCCESS) {
+		const char* description = nvrtcGetErrorString(err);
+		if (!strcmp(description, "NVRTC_ERROR unknown"))
+			throw std::runtime_error("unknown NVRTC error code: " + std::to_string(err));
+		throw std::runtime_error(std::string("CUDA error: " + std::string(description)));
 	}
 }
 
@@ -250,10 +261,45 @@ void CUDASolver::setDevice(uint8_t index) {
 	m_device = m_availableDevices.at(index);
 }
 
+
+void CUDASolver::buildPtx(const char* kernelSourcePath) {
+	std::ifstream kernelSourceFile(kernelSourcePath);
+	std::string kernelSource((std::istreambuf_iterator<char>(kernelSourceFile)), (std::istreambuf_iterator<char>()));
+	nvrtcProgram program;
+	checkNVRTCErr(nvrtcCreateProgram(&program, &kernelSource[0], "nqfaf", 0, NULL, NULL));
+
+	std::string optN = "-D N=" + std::to_string(m_N);
+	std::string optBlockSize = "-D BLOCK_SIZE=" + std::to_string(m_device.config.blockSize);
+	const char* const options[]{optN.c_str(), optBlockSize.c_str()};
+	checkNVRTCErr(nvrtcCompileProgram(program, 2, options));
+	size_t logSize;
+	checkNVRTCErr(nvrtcGetProgramLogSize(program, &logSize));
+	if (logSize > 1) {
+		char* log = new char[logSize];
+		checkNVRTCErr(nvrtcGetProgramLog(program, log));
+		throw std::invalid_argument("kernel source code could not be compiled: " + std::string(log));
+	}
+	
+	size_t ptxSize;
+	checkNVRTCErr(nvrtcGetPTXSize(program, &ptxSize));
+	m_device.ptx = new char[ptxSize];
+	checkNVRTCErr(nvrtcGetPTX(program, m_device.ptx));
+}
+
 void CUDASolver::solve() {
 	ConstellationsGenerator generator(m_N);
-	m_constellations = generator.genConstellations(6);
-	std::cout << "generated " << m_constellations.size() << " constellations" << std::endl;
+	m_constellations = generator.genConstellations(m_device.config.preQueens);
+
+	buildPtx("kernel.cu");
+
+	/*checkCUErr(cuCtxCreate(&m_device.context, 0, m_device.device));
+	checkCUErr(cuStreamCreate(&m_device.xStream, 0));
+	checkCUErr(cuStreamCreate(&m_device.memStream, 0));
+	checkCUErr(cuStreamCreate(&m_device.updateStream, 0));
+	checkCUErr(cuEventCreate(&m_device.startEvent, 0));
+	checkCUErr(cuEventCreate(&m_device.endEvent, 0));
+	checkCUErr(cuEventCreate(&m_device.memEvent, 0));
+	checkCUErr(cuEventCreate(&m_device.updateEvent, 0));*/
 }
 
 uint64_t CUDASolver::getDuration() const {

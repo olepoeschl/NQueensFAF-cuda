@@ -8,6 +8,7 @@
 #include <unordered_set>
 
 #include <cuda.h>
+#include <nvrtc.h>
 
 class SolverConfig {
 public:
@@ -81,7 +82,8 @@ private:
 
 class CUDADeviceConfig {
 public:
-	uint16_t blockSize;
+	uint16_t blockSize = 64;
+	uint8_t preQueens = 6;
 };
 
 class CUDASolver : public Solver {
@@ -106,11 +108,16 @@ private:
 		CUDADeviceConfig config{};
 		CUdevice device = 0;
 		CUcontext context = 0;
+		CUstream xStream = 0, memStream = 0, updateStream = 0;
+		CUevent startEvent = 0, endEvent = 0, memEvent = 0, updateEvent = 0;
+		char* ptx = NULL;
 		CUmodule module = 0;
 		CUfunction function = 0;
 	};
 	static void checkCUErr(CUresult err);
+	static void checkNVRTCErr(nvrtcResult err);
 	static void fetchAvailableDevices();
+	void buildPtx(const char* kernelSourcePath);
 	static std::vector<Device> m_availableDevices;
 	Device m_device;
 	std::vector<Constellation> m_constellations;
