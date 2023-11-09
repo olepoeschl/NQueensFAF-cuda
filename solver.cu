@@ -41,6 +41,16 @@ void Solver::waitFor() {
 }
 
 /*
+ * ConstellationsGenerator implementation
+*/
+ConstellationsGenerator::ConstellationsGenerator(int N) :
+	m_N(N), m_preQueens(0), m_LD(0), m_RD(0), m_subconstellationsCounter(0) {
+
+	m_L = (1 << (m_N - 1));
+	m_mask = (m_L << 1) - 1;
+}
+
+/*
  * CUDASolver implementation
 */
 std::vector<CUDASolver::Device> CUDASolver::m_availableDevices;

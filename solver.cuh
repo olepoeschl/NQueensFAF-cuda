@@ -73,7 +73,7 @@ private:
 	int toÍjkl(int i, int j, int k, int l);
 	bool checkRotations(int i, int j, int k, int l);
 	int m_N, m_preQueens;
-	int m_L, m_mask, m_LD, m_RD, m_counter;
+	int m_L, m_mask, m_LD, m_RD, m_subconstellationsCounter;
 	std::vector<Constellation> m_constellations;
 	std::unordered_set<int> m_ijkls;
 };
