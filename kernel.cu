@@ -12,24 +12,24 @@ extern "C" __global__ void nqfaf(cuda_constellation* constellations, unsigned lo
 	}
 
 	const int l_id = threadIdx.x; // local thread id within workgroup
-	const unsigned int L = 1 << (N - 1); // queen at the left border of the board (right border is represented by 1) 	
+	const unsigned long int L = 1 << (N - 1); // queen at the left border of the board (right border is represented by 1) 	
 
 	// describe the occupancy of the board 
-	unsigned int ld = c.ld; // left diagonals, 1 means occupied
-	unsigned int rd = c.rd; // right diagonals, 1 means occupied 
-	unsigned int col = ~(L - 2) ^ c.col; // columns, 1 means occupied
+	unsigned long int ld = c.ld; // left diagonals, 1 means occupied
+	unsigned long int rd = c.rd; // right diagonals, 1 means occupied 
+	unsigned long int col = ~(L - 2) ^ c.col; // columns, 1 means occupied
 	// for memorizing board-leaving diagonals 
-	unsigned int ld_mem = 0;
-	unsigned int rd_mem = 0;
+	unsigned long int ld_mem = 0;
+	unsigned long int rd_mem = 0;
 
 	// jkl_queens occupies the diagonals, that go from bottom row to upper right and upper left 
 	// and also the left and right column 
 	// in row k only L is free and in row l only 1 is free 
-	__shared__ unsigned int jkl_queens[N];
+	__shared__ unsigned long int jkl_queens[N];
 	// the rd from queen j and k with respect to the last row
-	unsigned int rdiag = (L >> ((c.start_ijkl >> 10) & 31)) | (L >> (N - 1 - ((c.start_ijkl >> 5) & 31)));
+	unsigned long int rdiag = (L >> ((c.start_ijkl >> 10) & 31)) | (L >> (N - 1 - ((c.start_ijkl >> 5) & 31)));
 	// the ld from queen j and l with respect to the last row
-	unsigned int ldiag = (L >> ((c.start_ijkl >> 10) & 31)) | (L >> (c.start_ijkl & 31));
+	unsigned long int ldiag = (L >> ((c.start_ijkl >> 10) & 31)) | (L >> (c.start_ijkl & 31));
 	if (l_id == 0) {
 		// we also occupy the left and right border 
 		for (int a = 0; a < N; a++) {
@@ -56,17 +56,17 @@ extern "C" __global__ void nqfaf(cuda_constellation* constellations, unsigned lo
 		rd &= ~(rdiag >> start);
 
 	int row = start;
-	unsigned long solutions = 0;
+	unsigned long long int solutions = 0;
 
 	/* calculate the occupancy of the first row
 	 * and place a queen in the first free slot
 	 * (read the comments in the loop for more information)
 	 */
-	unsigned int free = ~(ld | rd | col | jkl_queens[row]);
-	unsigned int queen = -free & free;
+	unsigned long int free = ~(ld | rd | col | jkl_queens[row]);
+	unsigned long int queen = -free & free;
 
 	// all rows of queens in total contain the queens of the board of one workitem
-	__shared__ unsigned int queens[BLOCK_SIZE][N]; // for remembering the queens for all rows for all boards in the work-group 
+	__shared__ unsigned long int queens[BLOCK_SIZE][N]; // for remembering the queens for all rows for all boards in the work-group 
 	queens[l_id][start] = queen;
 
 	// going forward (setting a queen) or backward (removing a queen)? 										
