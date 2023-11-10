@@ -68,7 +68,7 @@ ConstellationsGenerator::ConstellationsGenerator(uint8_t N) :
 	m_mask = (m_L << 1) - 1;
 }
 
-std::vector<std::shared_ptr<Constellation>>& ConstellationsGenerator::genConstellations(uint8_t preQueens) {
+std::vector<Constellation>& ConstellationsGenerator::genConstellations(uint8_t preQueens) {
 	m_preQueens = preQueens;
 	uint32_t ld, rd, col, ijkl;
 	size_t currentSize;
@@ -110,8 +110,8 @@ std::vector<std::shared_ptr<Constellation>>& ConstellationsGenerator::genConstel
 
 			// ijkl and sym are the same for all subconstellations
 			for (uint32_t a = 0; a < m_subconstellationsCounter; a++) {
-				uint32_t start = m_constellations.at(currentSize - a - 1)->startIjkl;
-				m_constellations.at(currentSize - a - 1)->startIjkl = start | ijkl;
+				uint32_t start = m_constellations.at(currentSize - a - 1).startIjkl;
+				m_constellations.at(currentSize - a - 1).startIjkl = start | ijkl;
 			}
 		}
 	}
@@ -150,8 +150,8 @@ std::vector<std::shared_ptr<Constellation>>& ConstellationsGenerator::genConstel
 
 						// jkl and sym and start are the same for all subconstellations
 						for (uint32_t a = 0; a < m_subconstellationsCounter; a++) {
-							uint32_t start = m_constellations.at(currentSize - a - 1)->startIjkl;
-							m_constellations.at(currentSize - a - 1)->startIjkl = start | ijkl;
+							uint32_t start = m_constellations.at(currentSize - a - 1).startIjkl;
+							m_constellations.at(currentSize - a - 1).startIjkl = start | ijkl;
 						}
 					}
 				}
@@ -172,8 +172,8 @@ void ConstellationsGenerator::setPreQueens(uint32_t ld, uint32_t rd, uint32_t co
 		// add the subconstellations to the list
 		// id=-1 signals that this constellation does not have a specific id
 		// solutions=-1 signals that this constellation has not been solved yet
-		std::shared_ptr<Constellation> cPtr(new Constellation(-1, ld, rd, col, row << 20, -1));
-		m_constellations.push_back(cPtr);
+		Constellation c(-1, ld, rd, col, row << 20, -1);
+		m_constellations.push_back(c);
 		m_subconstellationsCounter++;
 		return;
 	}
@@ -211,26 +211,25 @@ bool ConstellationsGenerator::checkRotations(uint8_t i, uint8_t j, uint8_t k, ui
 	return false;
 }
 
-void ConstellationsGenerator::addPseudoConstellation(std::vector<std::shared_ptr<Constellation>>& constellations, uint32_t ijkl) {
-	std::shared_ptr<Constellation> cPtr(new Constellation(-1, (1 << m_N) - 1, (1 << m_N) - 1, (1 << m_N) - 1, (69 << 20) | ijkl, -2));
-	constellations.push_back(cPtr);
+void ConstellationsGenerator::addPseudoConstellation(std::vector<Constellation>& constellations, uint32_t ijkl) {
+	constellations.push_back(Constellation(-1, (1 << m_N) - 1, (1 << m_N) - 1, (1 << m_N) - 1, (69 << 20) | ijkl, -2));
 }
 
-std::vector<std::shared_ptr<Constellation>> ConstellationsGenerator::fillWithPseudoConstellations(std::vector<std::shared_ptr<Constellation>>& constellations, uint16_t blockSize) {
+std::vector<Constellation> ConstellationsGenerator::fillWithPseudoConstellations(std::vector<Constellation>& constellations, uint16_t blockSize) {
 	std::sort(constellations.begin(), constellations.end());
-	std::vector<std::shared_ptr<Constellation>> newConstellations;
-	int currentJkl = constellations.at(0)->startIjkl & ((1 << 15) - 1);
+	std::vector<Constellation> newConstellations;
+	int currentJkl = constellations.at(0).startIjkl & ((1 << 15) - 1);
 	for (const auto& c : constellations) {
 		// iterate through constellations, add each remaining constellations and fill up
 		// each group of ijkl till its dividable by workgroup-size
-		if (c->solutions >= 0)
+		if (c.solutions >= 0)
 			continue;
 
-		if ((c->startIjkl & ((1 << 15) - 1)) != currentJkl) { // check if new ijkl is found
+		if ((c.startIjkl & ((1 << 15) - 1)) != currentJkl) { // check if new ijkl is found
 			while (newConstellations.size() % blockSize != 0) {
 				addPseudoConstellation(newConstellations, currentJkl);
 			}
-			currentJkl = c->startIjkl & ((1 << 15) - 1);
+			currentJkl = c.startIjkl & ((1 << 15) - 1);
 		}
 		newConstellations.push_back(c);
 	}
@@ -372,37 +371,37 @@ void CUDASolver::compileProgram(const char* kernelSourcePath) {
 void CUDASolver::solve() {
 	ConstellationsGenerator generator(m_N);
 	m_constellations = generator.genConstellations(m_preQueens);
-	m_filledConstellations = generator.fillWithPseudoConstellations(m_constellations, m_device.config.blockSize);
+	m_constellations = generator.fillWithPseudoConstellations(m_constellations, m_device.config.blockSize);
 
 	m_device.createCUDAObjects();
 	compileProgram("kernel.cu");
 
 	// write buffers to GPU
-	size_t filledConstellationsSize = m_filledConstellations.size() * sizeof(cuda_constellation);
-	cuda_constellation* h_constellations = (cuda_constellation*)malloc(filledConstellationsSize);
+	size_t constellationsSize = m_constellations.size() * sizeof(cuda_constellation);
+	cuda_constellation* h_constellations = (cuda_constellation*)malloc(constellationsSize);
 	if (h_constellations == NULL) {
 		throw std::runtime_error("could not allocate memory for the host array containing the devices constellations");
 	}
-	std::vector<std::shared_ptr<Constellation>>::iterator it;
+	std::vector<Constellation>::iterator it;
 	int i;
-	for (it = m_filledConstellations.begin(), i = 0; it < m_filledConstellations.end(); it++, i++) {
-		h_constellations[i] = (*it)->toCUDAConstellation();
+	for (it = m_constellations.begin(), i = 0; it < m_constellations.end(); it++, i++) {
+		h_constellations[i] = (*it).toCUDAConstellation();
 	}
-	size_t resultsSize = m_filledConstellations.size() * sizeof(uint64_t);
+	size_t resultsSize = m_constellations.size() * sizeof(uint64_t);
 	int64_t* h_results = (int64_t*)malloc(resultsSize);
 	if (h_results == NULL) {
 		throw std::runtime_error("could not allocate memory for the host array containing the results of the constellations");
 	}
-	for (it = m_filledConstellations.begin(), i = 0; it < m_filledConstellations.end(); it++, i++) {
-		h_results[i] = (*it)->solutions;
+	for (it = m_constellations.begin(), i = 0; it < m_constellations.end(); it++, i++) {
+		h_results[i] = (*it).solutions;
 	}
 
 	CUdeviceptr d_constellations;
-	checkCUErr(cuMemAllocAsync(&d_constellations, filledConstellationsSize, m_device.memStream));
+	checkCUErr(cuMemAllocAsync(&d_constellations, constellationsSize, m_device.memStream));
 	CUdeviceptr d_results;
 	checkCUErr(cuMemAllocAsync(&d_results, resultsSize, m_device.memStream));
 
-	checkCUErr(cuMemcpyHtoDAsync(d_constellations, h_constellations, filledConstellationsSize, m_device.memStream));
+	checkCUErr(cuMemcpyHtoDAsync(d_constellations, h_constellations, constellationsSize, m_device.memStream));
 	checkCUErr(cuMemcpyHtoDAsync(d_results, h_results, resultsSize, m_device.memStream));
 	checkCUErr(cuEventRecord(m_device.memEvent, m_device.memStream));
 
@@ -410,7 +409,7 @@ void CUDASolver::solve() {
 	void* args[] = {&d_constellations, &d_results};
 
 	// launch kernel
-	size_t blocksPerGrid = m_filledConstellations.size() / m_device.config.blockSize;
+	int blocksPerGrid = m_constellations.size() / m_device.config.blockSize;
 	checkCUErr(cuEventSynchronize(m_device.memEvent));
 	checkCUErr(cuEventRecord(m_device.startEvent, m_device.xStream));
 	checkCUErr(cuLaunchKernel(m_function, blocksPerGrid, 1, 1, m_device.config.blockSize, 1, 1, 0, m_device.xStream, args, NULL));
@@ -423,10 +422,11 @@ void CUDASolver::solve() {
 	checkCUErr(cuEventRecord(m_device.updateEvent, m_device.updateStream));
 	checkCUErr(cuEventSynchronize(m_device.updateEvent));
 	for (int i = 0; i < m_constellations.size(); i++) {
-		Constellation& c = *m_filledConstellations.at(i).get();
+		Constellation& c = m_constellations.at(i);
 		if (c.startIjkl >> 20 == 69) // start=69 is for trash constellations
 			continue;
-		int64_t solutionsForConstellation = h_results[i] * c.symmetry(m_N);
+		long solutionsForConstellation = h_results[i]
+			* c.symmetry(m_N);
 		if (solutionsForConstellation >= 0) {
 			// synchronize with the list of constellations on the RAM
 			c.solutions = solutionsForConstellation;
@@ -442,25 +442,17 @@ void CUDASolver::solve() {
 	m_device.destroyCUDAObjects();
 }
 
-float CUDASolver::getDuration() const {
+uint64_t CUDASolver::getDuration() const {
 	return m_durationInMs;
 }
 
-int32_t sumSolvedConstellations(int32_t acc, const std::shared_ptr<Constellation> c) {
-	if (c->startIjkl >> 20 == 69)
-		return acc;
-	if (c->solutions >= 0)
-		return acc + 1;
-	return acc;
-}
 float CUDASolver::getProgress() const {
-	int32_t solvedConstellations = std::accumulate(m_constellations.begin(), m_constellations.end(), 0, sumSolvedConstellations);
-	return m_constellations.size() > 0 ? (float)solvedConstellations / m_constellations.size() : 0.f;
+	return 1.234f;
 }
 
-static int64_t sumSolutions(int64_t acc, const std::shared_ptr<Constellation> c) {
-	if(c->solutions >= 0)
-		return acc + c->solutions;
+static int64_t sumSolutions(int64_t acc, const Constellation& c) {
+	if(c.solutions >= 0)
+		return acc + c.solutions;
 	return acc;
 }
 int64_t CUDASolver::getSolutions() const {

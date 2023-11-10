@@ -31,7 +31,7 @@ public:
 
 class Solver {
 public:
-	virtual float getDuration() const = 0;
+	virtual uint64_t getDuration() const = 0;
 	virtual float getProgress() const = 0;
 	virtual int64_t getSolutions() const = 0;
 	virtual void solve() = 0;
@@ -105,17 +105,17 @@ public:
 class ConstellationsGenerator {
 public:
 	ConstellationsGenerator(uint8_t N);
-	std::vector<std::shared_ptr<Constellation>>& genConstellations(uint8_t preQueens);
-	std::vector<std::shared_ptr<Constellation>> fillWithPseudoConstellations(std::vector<std::shared_ptr<Constellation>>& constellations, uint16_t blockSize);
+	std::vector<Constellation>& genConstellations(uint8_t preQueens);
+	std::vector<Constellation> fillWithPseudoConstellations(std::vector<Constellation>& constellations, uint16_t blockSize);
 private:
 	void setPreQueens(uint32_t ld, uint32_t rd, uint32_t col, uint8_t k, uint8_t l, uint8_t row, uint8_t queens);
 	uint32_t toIjkl(uint8_t i, uint8_t j, uint8_t k, uint8_t l) const;
 	bool checkRotations(uint8_t i, uint8_t j, uint8_t k, uint8_t l) const;
-	void addPseudoConstellation(std::vector<std::shared_ptr<Constellation>>& constellations, uint32_t ijkl);
+	void addPseudoConstellation(std::vector<Constellation>& constellations, uint32_t ijkl);
 	uint8_t m_N, m_preQueens;
 	uint32_t m_L, m_mask, m_LD, m_RD;
 	uint32_t m_subconstellationsCounter;
-	std::vector<std::shared_ptr<Constellation>> m_constellations;
+	std::vector<Constellation> m_constellations;
 	std::unordered_set<uint32_t> m_ijkls;
 };
 
@@ -127,7 +127,7 @@ public:
 class CUDASolver : public Solver {
 public:
 	CUDASolver(uint8_t N);
-	float getDuration() const;
+	uint64_t getDuration() const;
 	float getProgress() const;
 	int64_t getSolutions() const;
 	void solve();
@@ -159,7 +159,7 @@ private:
 	static std::vector<Device> m_availableDevices;
 	Device m_device;
 	CUfunction m_function = 0;
-	std::vector<std::shared_ptr<Constellation>> m_constellations, m_filledConstellations;
+	std::vector<Constellation> m_constellations;
 	std::chrono::high_resolution_clock::time_point m_start, m_end;
 	float m_durationInMs = 0.f;
 	uint8_t m_preQueens = 6;
