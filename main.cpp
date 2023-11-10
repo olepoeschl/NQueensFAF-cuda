@@ -20,13 +20,13 @@ int main() {
 		cudaSolver.solve();
 	}
 	catch(SolverException e){
-		std::cerr << "!unexpected solver exception: " << e.what() << std::endl;
+		std::cerr << "! unexpected solver exception: " << e.what() << std::endl;
 	}
 	catch (std::runtime_error e) {
-		std::cerr << "!unexpected runtime error: " << e.what() << std::endl;
+		std::cerr << "! unexpected runtime error: " << e.what() << std::endl;
 	}
 	catch (std::exception e) {
-		std::cerr << "!unexpected exception: " << e.what() << std::endl;
+		std::cerr << "! unexpected exception: " << e.what() << std::endl;
 	}
 	return 0;
 }
