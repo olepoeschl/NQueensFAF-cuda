@@ -85,6 +85,8 @@ struct cudaConstellation {
 	}
 	cudaConstellation(Constellation c) : ld(c.ld), rd(c.rd), col(c.col), startIjkl(c.startIjkl) {
 	}
+	cudaConstellation() : ld(0), rd(0), col(0), startIjkl(0) {
+	}
 	uint32_t ld, rd, col, startIjkl;
 };
 

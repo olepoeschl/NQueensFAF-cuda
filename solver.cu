@@ -355,6 +355,9 @@ void CUDASolver::solve() {
 	checkCUErr(cuMemcpyHtoD(d_results, h_results, resultsSize));
 	// ---
 
+	// launch kernel
+	// ...
+
 	checkCUErr(cuMemFree(d_constellations));
 	checkCUErr(cuMemFree(d_results));
 	if (h_constellations)
