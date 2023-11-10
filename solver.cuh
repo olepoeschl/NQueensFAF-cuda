@@ -1,6 +1,8 @@
 #ifndef SOLVER_H
 #define SOLVER_H
 
+#include "htodtypes.cuh"
+
 #include <string>
 #include <fstream>
 #include <thread>
@@ -61,6 +63,7 @@ public:
 	int getÍjkl() const {
 		return startIjkl & 0b11111111111111111111;
 	}
+	cudaConstellation toCUDAConstellation();
 	int id, ld, rd, col, startIjkl;
 	int64_t solutions;
 };
@@ -78,16 +81,6 @@ private:
 	uint32_t m_subconstellationsCounter;
 	std::vector<Constellation> m_constellations;
 	std::unordered_set<uint32_t> m_ijkls;
-};
-
-struct cudaConstellation {
-	cudaConstellation(uint32_t _ld, uint32_t _rd, uint32_t _col, uint32_t _startIjkl) : ld(_ld), rd(_rd), col(_col), startIjkl(_startIjkl) {
-	}
-	cudaConstellation(Constellation c) : ld(c.ld), rd(c.rd), col(c.col), startIjkl(c.startIjkl) {
-	}
-	cudaConstellation() : ld(0), rd(0), col(0), startIjkl(0) {
-	}
-	uint32_t ld, rd, col, startIjkl;
 };
 
 class CUDADeviceConfig {

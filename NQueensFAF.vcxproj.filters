@@ -18,6 +18,9 @@
     <ClInclude Include="solver.cuh">
       <Filter>Headerdateien</Filter>
     </ClInclude>
+    <ClInclude Include="htodtypes.cuh">
+      <Filter>Headerdateien</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp">

@@ -137,6 +137,7 @@
     <ClCompile Include="main.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="htodtypes.cuh" />
     <ClInclude Include="solver.cuh" />
   </ItemGroup>
   <ItemGroup>

@@ -45,6 +45,18 @@ void Solver::waitFor() {
 }
 
 /*
+ * Constellation implementation
+*/
+cudaConstellation Constellation::toCUDAConstellation() {
+	cudaConstellation cu;
+	cu.ld = ld;
+	cu.rd = rd;
+	cu.col = col;
+	cu.start_ijkl = startIjkl;
+	return cu;
+}
+
+/*
  * ConstellationsGenerator implementation
 */
 ConstellationsGenerator::ConstellationsGenerator(uint8_t N) :
@@ -335,7 +347,7 @@ void CUDASolver::solve() {
 		throw std::runtime_error("could not allocate memory for the host array containing the devices constellations");
 	}
 	for (int i = 0; i < m_constellations.size(); i++) {
-		h_constellations[i] = cudaConstellation(m_constellations.at(i));
+		h_constellations[i] = m_constellations.at(i).toCUDAConstellation();
 	}
 	size_t resultsSize = m_constellations.size() * sizeof(uint64_t);
 	uint64_t* h_results = (uint64_t*)malloc(resultsSize);
