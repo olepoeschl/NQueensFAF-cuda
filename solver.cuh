@@ -57,14 +57,20 @@ private:
 
 class Constellation {
 public:
-	Constellation(int c_id, int c_ld, int c_rd, int c_col, int c_startIjkl, int64_t c_solutions) :
+	Constellation(int32_t c_id, uint32_t c_ld, uint32_t c_rd, uint32_t c_col, uint32_t c_startIjkl, int64_t c_solutions) :
 		id(c_id), ld(c_ld), rd(c_rd), col(c_col), startIjkl(c_startIjkl), solutions(c_solutions) {
+	}
+	bool operator < (const Constellation& c) const {
+		return getJkl() < c.getJkl();
 	}
 	int getÍjkl() const {
 		return startIjkl & 0b11111111111111111111;
 	}
-	cudaConstellation toCUDAConstellation();
-	int id, ld, rd, col, startIjkl;
+	int getJkl() const {
+		return startIjkl & 0b111111111111111;
+	}
+	cuda_constellation toCUDAConstellation();
+	uint32_t id, ld, rd, col, startIjkl;
 	int64_t solutions;
 };
 
@@ -72,10 +78,12 @@ class ConstellationsGenerator {
 public:
 	ConstellationsGenerator(uint8_t N);
 	std::vector<Constellation>& genConstellations(uint8_t preQueens);
+	std::vector<Constellation> fillWithPseudoConstellations(std::vector<Constellation>& constellations, uint16_t blockSize);
 private:
 	void setPreQueens(uint32_t ld, uint32_t rd, uint32_t col, uint8_t k, uint8_t l, uint8_t row, uint8_t queens);
 	uint32_t toIjkl(uint8_t i, uint8_t j, uint8_t k, uint8_t l) const;
 	bool checkRotations(uint8_t i, uint8_t j, uint8_t k, uint8_t l) const;
+	void addPseudoConstellation(std::vector<Constellation>& constellations, uint32_t ijkl);
 	uint8_t m_N, m_preQueens;
 	uint32_t m_L, m_mask, m_LD, m_RD;
 	uint32_t m_subconstellationsCounter;
@@ -86,7 +94,6 @@ private:
 class CUDADeviceConfig {
 public:
 	uint16_t blockSize = 64;
-	uint8_t preQueens = 6;
 };
 
 class CUDASolver : public Solver {
@@ -98,6 +105,7 @@ public:
 	void solve();
 	std::vector<std::string> getAvailableDevices() const;
 	void setDevice(uint8_t index);
+	void setPreQueens(uint8_t preQueens);
 private:
 	class Device {
 	public:
@@ -125,6 +133,7 @@ private:
 	CUfunction function = 0;
 	std::vector<Constellation> m_constellations;
 	std::chrono::high_resolution_clock::time_point m_start, m_end;
+	uint8_t m_preQueens = 6;
 };
 
 class SolverException : public std::exception {

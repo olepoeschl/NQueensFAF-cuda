@@ -1,8 +1,8 @@
 // Explosion Boost 9000
 #include "htodtypes.cuh"
 
-extern "C" __global__ void nqfaf(cudaConstellation* constellations, unsigned long long* result) {
-	const struct cudaConstellation c = constellations[blockIdx.x * blockDim.x + threadIdx.x]; // task for this work item
+extern "C" __global__ void nqfaf(cuda_constellation* constellations, unsigned long long* result) {
+	const struct cuda_constellation c = constellations[blockIdx.x * blockDim.x + threadIdx.x]; // task for this work item
 									
 	// start_jkl_arr contains [6 queens free][5 queens for start][5 queens for i][5 queens for j][5 queens for k][5 queens for l] 
 	const int start = c.start_ijkl >> 20 & 31;
