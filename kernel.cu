@@ -1,6 +1,6 @@
 // Explosion Boost 9000
 struct constellation {
-	unsigned long int ld, rd, col, startIjkl;
+	unsigned long int ld, rd, col, start_ijkl;
 };
 
 extern "C" __global__ void nqfaf(constellation* constellations, unsigned long long* result) {
@@ -27,7 +27,7 @@ extern "C" __global__ void nqfaf(constellation* constellations, unsigned long lo
 	// jkl_queens occupies the diagonals, that go from bottom row to upper right and upper left 
 	// and also the left and right column 
 	// in row k only L is free and in row l only 1 is free 
-	local unsigned int jkl_queens[N];
+	__shared__ unsigned int jkl_queens[N];
 	// the rd from queen j and k with respect to the last row
 	unsigned int rdiag = (L >> ((c.start_ijkl >> 10) & 31)) | (L >> (N - 1 - ((c.start_ijkl >> 5) & 31)));
 	// the ld from queen j and l with respect to the last row
@@ -38,7 +38,7 @@ extern "C" __global__ void nqfaf(constellation* constellations, unsigned long lo
 			jkl_queens[N - 1 - a] = (ldiag >> a) | (rdiag << a) | L | 1;
 		}
 	}
-	syncthreads();
+	__syncthreads();
 	ldiag = L >> ((c.start_ijkl >> 5) & 31); // ld from queen l with respect to the first row 
 	rdiag = 1 << (c.start_ijkl & 31); // ld from queen k with respect to the first row 
 	if (l_id == 0) {
@@ -48,7 +48,7 @@ extern "C" __global__ void nqfaf(constellation* constellations, unsigned long lo
 		jkl_queens[((c.start_ijkl >> 5) & 31)] = ~L;
 		jkl_queens[(c.start_ijkl & 31)] = ~1;
 	}
-	syncthreads();
+	__syncthreads();
 
 	ld &= ~(ldiag << start); // remove queen k from ld 
 	if ((c.start_ijkl & 31) != N - 1)
@@ -68,7 +68,7 @@ extern "C" __global__ void nqfaf(constellation* constellations, unsigned long lo
 	unsigned int queen = -free & free;
 
 	// all rows of queens in total contain the queens of the board of one workitem
-	local unsigned int queens[WORKGROUP_SIZE][N]; // for remembering the queens for all rows for all boards in the work-group 
+	__shared__ unsigned int queens[BLOCK_SIZE][N]; // for remembering the queens for all rows for all boards in the work-group 
 	queens[l_id][start] = queen;
 
 	// going forward (setting a queen) or backward (removing a queen)? 										
@@ -187,5 +187,5 @@ extern "C" __global__ void nqfaf(constellation* constellations, unsigned long lo
 		col ^= queen;
 	}
 	// write the number of solutions for this work item back to global memory
-	result[g_id] = solutions;
+	result[blockIdx.x * blockDim.x + threadIdx.x] = solutions;
 }

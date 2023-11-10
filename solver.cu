@@ -296,13 +296,20 @@ void CUDASolver::compileProgram(const char* kernelSourcePath) {
 	std::string optN = "-D N=" + std::to_string(m_N);
 	std::string optBlockSize = "-D BLOCK_SIZE=" + std::to_string(m_device.config.blockSize);
 	const char* const options[]{optN.c_str(), optBlockSize.c_str()};
-	checkNVRTCErr(nvrtcCompileProgram(program, 2, options));
-	size_t logSize;
-	checkNVRTCErr(nvrtcGetProgramLogSize(program, &logSize));
-	if (logSize > 1) {
-		char* log = new char[logSize];
-		checkNVRTCErr(nvrtcGetProgramLog(program, log));
-		throw std::invalid_argument("kernel source code could not be compiled: " + std::string(log));
+	nvrtcResult err = nvrtcCompileProgram(program, 2, options);
+	if (err != NVRTC_SUCCESS) {
+		if (err == NVRTC_ERROR_COMPILATION) {
+			size_t logSize;
+			checkNVRTCErr(nvrtcGetProgramLogSize(program, &logSize));
+			if (logSize > 1) {
+				char* log = new char[logSize];
+				checkNVRTCErr(nvrtcGetProgramLog(program, log));
+				throw std::invalid_argument("kernel source code could not be compiled: " + std::string(log));
+			}
+		}
+		else {
+			checkNVRTCErr(err);
+		}
 	}
 	
 	size_t ptxSize;
