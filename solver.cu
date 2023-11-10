@@ -96,8 +96,8 @@ std::vector<Constellation>& ConstellationsGenerator::genConstellations(uint8_t p
 
 			// ijkl and sym are the same for all subconstellations
 			for (uint32_t a = 0; a < m_subconstellationsCounter; a++) {
-				uint32_t start = m_constellations.at(currentSize - a - 1).startijkl;
-				m_constellations.at(currentSize - a - 1).startijkl = start | ijkl;
+				uint32_t start = m_constellations.at(currentSize - a - 1).startIjkl;
+				m_constellations.at(currentSize - a - 1).startIjkl = start | ijkl;
 			}
 		}
 	}
@@ -136,8 +136,8 @@ std::vector<Constellation>& ConstellationsGenerator::genConstellations(uint8_t p
 
 						// jkl and sym and start are the same for all subconstellations
 						for (uint32_t a = 0; a < m_subconstellationsCounter; a++) {
-							uint32_t start = m_constellations.at(currentSize - a - 1).startijkl;
-							m_constellations.at(currentSize - a - 1).startijkl = start | ijkl;
+							uint32_t start = m_constellations.at(currentSize - a - 1).startIjkl;
+							m_constellations.at(currentSize - a - 1).startIjkl = start | ijkl;
 						}
 					}
 				}
@@ -258,7 +258,7 @@ void CUDASolver::checkNVRTCErr(nvrtcResult err) {
 		const char* description = nvrtcGetErrorString(err);
 		if (!strcmp(description, "NVRTC_ERROR unknown"))
 			throw std::runtime_error("unknown NVRTC error code: " + std::to_string(err));
-		throw std::runtime_error(std::string("CUDA error: " + std::string(description)));
+		throw std::runtime_error(std::string("NVRTC error: " + std::string(description)));
 	}
 }
 
@@ -307,8 +307,9 @@ void CUDASolver::compileProgram(const char* kernelSourcePath) {
 	
 	size_t ptxSize;
 	checkNVRTCErr(nvrtcGetPTXSize(program, &ptxSize));
-	ptx = new char[ptxSize];
+	char* ptx = new char[ptxSize];
 	checkNVRTCErr(nvrtcGetPTX(program, ptx));
+	CUmodule module;
 	checkCUErr(cuModuleLoadData(&module, (const void*)ptx));
 	checkCUErr(cuModuleGetFunction(&function, module, "nqfaf"));
 }
@@ -319,6 +320,40 @@ void CUDASolver::solve() {
 
 	m_device.createCUDAObjects();
 	compileProgram("kernel.cu");
+
+	// write buffers to GPU
+	size_t constellationsSize = m_constellations.size() * sizeof(cudaConstellation);
+	cudaConstellation* h_constellations = (cudaConstellation*)malloc(constellationsSize);
+	if (h_constellations == NULL) {
+		throw std::runtime_error("could not allocate memory for the host array containing the devices constellations");
+	}
+	for (int i = 0; i < m_constellations.size(); i++) {
+		h_constellations[i] = cudaConstellation(m_constellations.at(i));
+	}
+	size_t resultsSize = m_constellations.size() * sizeof(uint64_t);
+	uint64_t* h_results = (uint64_t*)malloc(resultsSize);
+	if (h_results == NULL) {
+		throw std::runtime_error("could not allocate memory for the host array containing the results of the constellations");
+	}
+	for (int i = 0; i < m_constellations.size(); i++) {
+		h_results[i] = m_constellations.at(i).solutions;
+	}
+
+	CUdeviceptr d_constellations;
+	checkCUErr(cuMemAlloc(&d_constellations, constellationsSize));
+	CUdeviceptr d_results;
+	checkCUErr(cuMemAlloc(&d_results, resultsSize));
+
+	checkCUErr(cuMemcpyHtoD(d_constellations, h_constellations, constellationsSize));
+	checkCUErr(cuMemcpyHtoD(d_results, h_results, resultsSize));
+	// ---
+
+	checkCUErr(cuMemFree(d_constellations));
+	checkCUErr(cuMemFree(d_results));
+	if (h_constellations)
+		free(h_constellations);
+	if (h_results)
+		free(h_results);
 	m_device.destroyCUDAObjects();
 }
 

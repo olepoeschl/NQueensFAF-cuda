@@ -55,13 +55,13 @@ private:
 
 class Constellation {
 public:
-	Constellation(int c_id, int c_ld, int c_rd, int c_col, int c_startijkl, int64_t c_solutions) :
-		id(c_id), ld(c_ld), rd(c_rd), col(c_col), startijkl(c_startijkl), solutions(c_solutions) {
+	Constellation(int c_id, int c_ld, int c_rd, int c_col, int c_startIjkl, int64_t c_solutions) :
+		id(c_id), ld(c_ld), rd(c_rd), col(c_col), startIjkl(c_startIjkl), solutions(c_solutions) {
 	}
 	int getÍjkl() const {
-		return startijkl & 0b11111111111111111111;
+		return startIjkl & 0b11111111111111111111;
 	}
-	int id, ld, rd, col, startijkl;
+	int id, ld, rd, col, startIjkl;
 	int64_t solutions;
 };
 
@@ -78,6 +78,14 @@ private:
 	uint32_t m_subconstellationsCounter;
 	std::vector<Constellation> m_constellations;
 	std::unordered_set<uint32_t> m_ijkls;
+};
+
+struct cudaConstellation {
+	cudaConstellation(uint32_t _ld, uint32_t _rd, uint32_t _col, uint32_t _startIjkl) : ld(_ld), rd(_rd), col(_col), startIjkl(_startIjkl) {
+	}
+	cudaConstellation(Constellation c) : ld(c.ld), rd(c.rd), col(c.col), startIjkl(c.startIjkl) {
+	}
+	uint32_t ld, rd, col, startIjkl;
 };
 
 class CUDADeviceConfig {
@@ -119,8 +127,6 @@ private:
 	void compileProgram(const char* kernelSourcePath);
 	static std::vector<Device> m_availableDevices;
 	Device m_device;
-	char* ptx = NULL;
-	CUmodule module = 0;
 	CUfunction function = 0;
 	std::vector<Constellation> m_constellations;
 	std::chrono::high_resolution_clock::time_point m_start, m_end;
