@@ -10,7 +10,7 @@ int main() {
 		for (int i = 0; i < deviceNames.size(); i++) {
 			std::cout << "[" << i << "]\t" << deviceNames.at(i) << std::endl;
 		}
-		int chosenDeviceIndex;
+		int chosenDeviceIndex = 0;
 		std::cout << std::endl << "> choose device (index): ";
 		std::cin >> chosenDeviceIndex;
 		if (std::cin.fail()) {
